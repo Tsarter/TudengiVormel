@@ -21,7 +21,9 @@ class KalmanFilter(object):
         self.x = np.zeros((self.n, 1)) if x0 is None else x0
 
     def predict(self):
-        self.x = np.dot(self.F, self.x) 
+        # THE STATE EXTRAPOLATION EQUATION
+        self.x = np.dot(self.F, self.x)
+        # THE COVARIANCE EXTRAPOLATION EQUATION
         self.P = np.dot(np.dot(self.F, self.P), self.F.T) + self.Q
         return self.x
 
@@ -40,14 +42,17 @@ def example():
     # standard deviations
     Q = np.array([[0.05, 0.0], [0.0, 0.05]])
 
-    # state transition matrix nx × nx
+    # state transition matrix nx × nx, used to predict next step n + 1
     F = np.array([[1, 0], [0, 1]])
 
-    # measurement uncertainty nz × nz
+    # measurement uncertanty nz × nz
     R = np.array([[1, 0], [0, 1]])
 
-    # Observation matrix
+    # Observation matrix [x, y] x [[1, 0], [0, 1]] 
     H = np.array([[1, 0], [0, 1]])
+
+    # Estimate uncertanty, first measurment -> high uncertanty
+    P = np.array([[500, 0],[0, 500]])
 
     # Test measurments
     measurements = np.array([(0.2, 7), (0.3, 5), (0.2, 6), (0.4, 5), (-0.8, 8), (-0.8, 7), (-0.8, 4)])
@@ -60,7 +65,7 @@ def example():
     predictions = []
     x0 = np.array([kx[0], ky[0]]).reshape(2, 1)
     # Set up 
-    kf = KalmanFilter(F = F, H = H, R = R, Q = Q, x0 = x0)
+    kf = KalmanFilter(F = F, H = H, R = R, Q = Q, P = P, )
     for location in locations:
         location = np.array(location).reshape(2, 1)
         predictions.append(np.dot(H,  kf.predict()))
@@ -68,11 +73,12 @@ def example():
 
     px, py = zip(*predictions)
     import matplotlib.pyplot as plt
-    plt.plot(px, py, 'ro')
-    plt.plot(kx, ky, 'go')
+    plt.plot(px, py, 'ro', label="predictions")
+    plt.plot(kx, ky, 'go', label="measurments")
     plt.xlim([-10, 10])
     plt.ylim([0, 10])
-    plt.plot(predictions[-1][0], predictions[-1][1], 'bo')
+    plt.plot(predictions[-1][0], predictions[-1][1], 'bo', label="last prediction")
+    plt.legend()
     plt.show()
     print("done")
 
